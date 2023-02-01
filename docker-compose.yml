@@ -3,23 +3,25 @@ version: "3"
 services:
   db:
     image: postgres
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data/
   web:
     build: .
-    environment:
-      - SECRET_KEY=${SECRET_KEY}
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
+    env_file: .env
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
-    ports:
-      - "8000:8000"
+    expose:
+      - "80"
+      - "443"
     depends_on:
       - db
+    labels:
+      traefik.enable: "true"
+      traefik.frontend.rule: Host:${MEDVET_HOST}
+      traefik.port: "8000"
+      caddy: ${MEDVET_HOST}
+      caddy.reverse_proxy: "{{upstreams 8000}}"
 volumes:
   postgres_data:
